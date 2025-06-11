@@ -1,14 +1,19 @@
-import { expect, test, describe } from 'vitest'
+import { expect, test, describe, beforeEach } from 'vitest'
 import { RegisterUseCases } from '../register'
 import { compare } from 'bcryptjs'
 import { InMemoryUserRepository } from '@/repositories/in-memory/in-memory-users-repository'
 import { UserAlreadyExistsError } from '../errors/user-already-exists-error'
 
+let usersRepository: InMemoryUserRepository
+let sut: RegisterUseCases
+
 describe('Register Use Case', () => {
+  beforeEach(() => {
+    usersRepository = new InMemoryUserRepository()
+    sut = new RegisterUseCases(usersRepository)
+  })
   test('should has user password upon registration', async () => {
-    const usersRepository = new InMemoryUserRepository()
-    const registerUserCase = new RegisterUseCases(usersRepository)
-    const { user } = await registerUserCase.execute({
+    const { user } = await sut.execute({
       name: 'John Doe',
       email: 'johndoe@gmail.com',
       password: '123456',
@@ -22,19 +27,16 @@ describe('Register Use Case', () => {
     expect(isPasswordCorrectlyHashed).toBe(true)
   })
   test('should not be able to register with same email twice', async () => {
-    const usersRepository = new InMemoryUserRepository()
-    const registerUserCase = new RegisterUseCases(usersRepository)
-
     const email = 'johndoe@gmail.com'
 
-    await registerUserCase.execute({
+    await sut.execute({
       name: 'John Doe',
       email,
       password: '123456',
     })
 
     await expect(() =>
-      registerUserCase.execute({
+      sut.execute({
         name: 'John Doe',
         email,
         password: '123456',
@@ -43,9 +45,7 @@ describe('Register Use Case', () => {
   })
 
   test('should be able to register', async () => {
-    const usersRepository = new InMemoryUserRepository()
-    const registerUserCase = new RegisterUseCases(usersRepository)
-    const { user } = await registerUserCase.execute({
+    const { user } = await sut.execute({
       name: 'John Doe',
       email: 'johndoe@gmail.com',
       password: '123456',
